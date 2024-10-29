@@ -1,0 +1,5 @@
+#!/bin/bash
+
+files=(tests/file_{0..19})
+echo ./a.out "${files[@]}"
+./a.out "${files[@]}"
