@@ -1,0 +1,17 @@
+#!/bin/bash
+
+files=(tests/file_{0..20})
+for i in {1..100}
+do
+    python3 generate.py > res_p
+    ./a.out "${files[@]}" > res
+    cat res
+    cat res_p
+    diff res_p res
+    if [ $? -ne 0 ]; then
+        echo "Test Faild"
+        break
+    fi
+done
+
+echo "Test Passed"

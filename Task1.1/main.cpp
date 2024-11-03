@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <new>
 
 #include "func.hpp"
 
@@ -12,7 +13,7 @@ int main(int argc, char* argv[]) {
         printf("Usage %s <files>\n", argv[0]);
         return 1;
     }
-    a = new Arg[p];
+    a = new(std::nothrow) Arg[p];
     if(a == nullptr) {
         printf("Not enough memmory\n");
         return 2;

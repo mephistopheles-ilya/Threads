@@ -14,4 +14,4 @@ def create_files(num_files):
     return res_sum
 
 res = create_files(20)
-print(f"Result_p = {res}")
+print(f"Result = {res}")
