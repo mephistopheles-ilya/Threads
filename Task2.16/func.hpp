@@ -20,12 +20,12 @@ struct Arg {
     pthread_t tid = 0; // id of thread
     const char* name = nullptr; //name of file
     io_status error = io_status::undef;
-    int error_flag = 0;
-    int greater_than_stable = 0;
     double max_stable_elem = 0;
     int all_numbers = 0;
     int is_stable_exist = 0;
     int empty_files = 0;
+    int error_flag = 0;
+    int greater_than_stable = 0;
 };
 
 

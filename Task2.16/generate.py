@@ -1,5 +1,6 @@
 import random
 import os
+import sys
 
 def create_file(filename, length):
     with open(filename, 'w') as f:
@@ -26,7 +27,7 @@ def analyze_sequence(filename):
 def main():
     num_files = 20
     min_length = 0
-    max_length = 1000
+    max_length = int(sys.argv[1])
 
     max_value_overall = None
 
@@ -58,9 +59,12 @@ def main():
     if(flag is True):
         print(f'Result = {count_greater}')
     else:
-        print("There is no constant segemnts.")
-        print(f'Let in this case Result = {all_lenthg}')
-        print("It is amount of all numbers")
+        if all_lenthg == 0:
+            print("All files are empty. Let in this case Result = 0");
+        else:
+            print("There is no constant segemnts.")
+            print(f'Let in this case Result = {all_lenthg}')
+            print("It is amount of all numbers")
 
 if __name__ == "__main__":
     main()

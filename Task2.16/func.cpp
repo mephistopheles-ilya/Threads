@@ -95,12 +95,11 @@ void* thread_func(void* arg) {
     } else {
         a -> error_flag = 0;
     }
-    reduce_sum(a -> p, &(a -> error_flag), 1);
+
+    reduce_sum_max(a -> p, &(a -> all_numbers), 4, &(a -> max_stable_elem), a -> is_stable_exist);
     if(a -> error_flag > 0) {
         return nullptr;
     }
-    int remember_local = a->is_stable_exist;
-    reduce_sum(a -> p, &(a -> all_numbers), 3);
     if(a -> empty_files == a -> p) {
         a -> error  = io_status::all_empty;
         return nullptr;
@@ -109,9 +108,6 @@ void* thread_func(void* arg) {
         a -> error = io_status::no_stable;
         return nullptr;
     }
-    a->is_stable_exist = remember_local;
-
-    reduce_max(a -> p, &(a -> max_stable_elem), 1, a ->is_stable_exist);
 
     fp = fopen(a->name, "r");
     if (fp == nullptr) {
@@ -134,7 +130,7 @@ void* thread_func(void* arg) {
     } else {
         a -> error_flag = 0;
     }
-    reduce_sum(a -> p, &(a -> error_flag), 1);
+    reduce_sum(a -> p, &(a -> error_flag), 2);
     if(a -> error_flag > 0) {
         if (fp != nullptr) {
             fclose(fp);
@@ -143,7 +139,6 @@ void* thread_func(void* arg) {
     }
 
     a -> error = io_status::succes;
-    reduce_sum(a -> p, &(a -> greater_than_stable), 1);
     return nullptr;
 }
 
