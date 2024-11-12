@@ -1,0 +1,31 @@
+#!/bin/bash
+
+flag=0
+for i in {1..100}
+do
+    output=$(python3 generate.py)
+
+    number=$(echo "$output" | cut -d',' -f1)
+    message=$(echo "$output" | cut -d',' -f2-)
+
+
+    file_args=""
+    for i in $(seq 0 $number); do
+        file_args+="tests/file_$i "
+    done
+
+    ./a.out $file_args > my_res
+    echo $message > res
+    cat my_res
+    cat res
+    diff -w my_res res
+    if [ $? -ne 0 ]; then
+        echo "Test Faild"
+        break
+        $flag=1
+    fi
+done
+
+if [ $flag -ne 1 ]; then
+    echo "Test Passed"
+fi
