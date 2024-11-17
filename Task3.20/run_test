@@ -22,7 +22,7 @@ do
     if [ $? -ne 0 ]; then
         echo "Test Faild"
         break
-        $flag=1
+        flag=1
     fi
 done
 
