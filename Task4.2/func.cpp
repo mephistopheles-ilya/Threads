@@ -29,7 +29,6 @@ io_status read_array_from_file(FILE *f, double* array, int n) {
 }
 
 void* thread_func(void* arg) {
-    double global_time = get_full_time();
     double local_time = get_cpu_time();
 
     Arg* a = (Arg *)arg;
@@ -89,7 +88,6 @@ void* thread_func(void* arg) {
     reduce_sum(p, &(a->changed), 1);
 
     a->local_time = get_cpu_time() - local_time;
-    a->global_time = get_full_time() - global_time;
 
     return nullptr;
 }

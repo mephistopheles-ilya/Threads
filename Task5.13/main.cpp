@@ -14,7 +14,6 @@ int main(int argc, char* argv[]) {
     FILE* f = nullptr;
     double* array = nullptr;
     Arg* args = nullptr;
-    pthread_barrier_t barrier;
     if ((sscanf(argv[1], "%d", &p) != 1) || (sscanf(argv[2], "%d", &n) != 1)) {
         printf("Usage %s <number_of_threads> <number_of_elements> <file>\n", argv[0]);
         return 2;
@@ -56,13 +55,11 @@ int main(int argc, char* argv[]) {
         return 7;
     }
 
-    pthread_barrier_init(&barrier, nullptr, p);
     for(int i = 0; i < p; ++i) {
         args[i].k = i;
         args[i].p = p;
         args[i].n = n;
         args[i].array = array;
-        args[i].barrier = &barrier;
     }
 
     double global_time = get_full_time();
@@ -74,21 +71,19 @@ int main(int argc, char* argv[]) {
             }
             delete[] array;
             delete[] args;
-            pthread_barrier_destroy(&barrier);
             fclose(f);
             return 8;
         }
     }
 
     args[0].tid = pthread_self();
-    args[0].barrier = &barrier;
     thread_func(args + 0);
     for(int i = 1; i < p; ++i) {
         pthread_join(args[i].tid, nullptr);
     }
     global_time = get_full_time() - global_time;
 
-
+#if 0
     printf("RESULT %2d:", p);
     for(int i = 0; i < n; ++i) {
         printf(" %8.2e", array[i]);
@@ -100,18 +95,20 @@ int main(int argc, char* argv[]) {
     for(int i = 0; i < p; ++i) {
         printf("Time for thread number %d = %lf\n", i, args[i].local_time);
     }
+#endif
 
-#if 0
+#if 1
     printf("RESULT :");
     for(int i = 0; i < n; ++i) {
         printf(" %3.2lf", array[i]);
     }
+    printf("\n");
+    printf("Changed elements : %2d\n", args[0].changed);
 #endif
 
     fclose(f);
     delete[] array;
     delete[] args;
-    pthread_barrier_destroy(&barrier);
     return 0;
 }
 

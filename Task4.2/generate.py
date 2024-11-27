@@ -16,7 +16,7 @@ def write_sequence_to_file(sequence, filename):
             file.write(f"{number}\n")
 
 def main():
-    length = random.randint(1, 20)
+    length = random.randint(1, 5)
     lower_bound = -100
     upper_bound = 100
     filename = 'random_sequence.txt'
