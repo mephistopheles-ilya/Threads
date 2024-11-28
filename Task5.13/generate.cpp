@@ -29,13 +29,13 @@ int main(int argc, char* argv[]) {
     std::random_device rd; 
     std::mt19937 generator(rd());
     std::uniform_int_distribution<int> number(a, b);
-    std::vector<double> array{1, 0, -1, 25, 51};
+    std::vector<double> array(n);
     n = array.size();
-#if 0
+
     for(int i = 0; i < n; ++i) {
         array[i] = number(generator);
     }
-#endif
+
     std::vector<A> changes;
     int begin = 0, end = 0;
     for(int i = 1; i < n - 1;) {
@@ -63,21 +63,28 @@ int main(int argc, char* argv[]) {
     std::ranges::copy(array, oit_);
     of_ << "\n";
 
+    if (changes.size() != 0) {
+        for(size_t i = 0; i < changes.size() - 1; ++i) {
+            if (changes[i].end == changes[i + 1].begin) {
+                ++(changes[i + 1].begin);
+            }
+        }
+    }
     int changed = 0;
     for(auto& a: changes) {
-        std::cout << "Begin : " << a.begin << ' ' << "End : " << a.end << ' ' << "Value : " << a.new_value << std::endl; 
         for(int i = a.begin; i <= a.end; ++i) {
             array[i] = a.new_value;
             ++changed;
         }
     }
 
+
     std::ofstream of(argv[5]);
+    of << changed << std::endl;
     of << std::fixed << std::setprecision(2) << std::setw(3);
     std::ostream_iterator<double> oit(of, " ");
     std::ranges::copy(array, oit);
     of << "\n";
-    std::cout << changed << std::endl;
     return 0;
 }
 

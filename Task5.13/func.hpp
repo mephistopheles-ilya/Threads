@@ -37,6 +37,19 @@ struct Arg {
     double before_segment_begin = 0;
 
     double local_time = 0;
+
+    double segment_begin = 0;
+    double segment_end = 0;
+
+    bool end_of_segment_before = false;
+    bool begin_of_segment_next = false;
+
+    pthread_barrier_t* barrier = nullptr;
+
+    double new_prev_val = 0;
+    double new_next_val = 0;
+
+    void print_structure();
 };
 
 io_status read_array_from_file(FILE* f, double* array, int n);
