@@ -111,11 +111,13 @@ int main(int argc, char* argv[]) {
     printf(" Changed elements : %2d\n", args[0].changed);
 #endif
 
+#if 1
     printf("%d\n", args[0].changed);
     for(int i = 0; i < n; ++i) {
         printf("%3.2lf ", array[i]);
     }
     printf("\n");
+#endif
 
 
     fclose(f);

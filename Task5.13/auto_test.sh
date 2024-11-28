@@ -2,9 +2,9 @@
 
 flag=0
 
-for ((i=0;i<1;++i))
+for ((i=0;i<100;++i))
 do
-    ./gen 20 -2 2 init.txt res.txt
+    ./gen 20 -3 3 init.txt res.txt
     for ((j=1;j<=25;++j))
     do
         ./a.out $j 20 init.txt > my_res.txt

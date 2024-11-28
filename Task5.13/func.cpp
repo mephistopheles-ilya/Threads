@@ -198,7 +198,7 @@ void* thread_func(void* arg) {
     synchronize(p, a);
 
     //a->print_structure();
-    pthread_barrier_wait(a->barrier);
+    //pthread_barrier_wait(a->barrier);
 
     int i = 0, j = 0, end_counter = 0, tmp = 0, number_of_last_changed = -1;
     double begin = 0, end = 0, remember_changed_element = 0;
@@ -213,11 +213,12 @@ void* thread_func(void* arg) {
                 break;
             }
             if (a -> sequence_in_beginning == true && flag == false) {
-                if (a -> end_of_segment_before == true) {
-                    j = segment_begin + 1;
-                } else {
-                    j = segment_begin;
-                }
+                //if (a -> end_of_segment_before == true) {
+                //    j = segment_begin + 1;
+                //} else {
+                //    j = segment_begin;
+                //}
+                j = segment_begin;
                 number_of_last_changed = a->number_of_end_of_beginning;
                 remember_changed_element = array[a->number_of_end_of_beginning];
                 i = a->number_of_end_of_beginning;
@@ -230,7 +231,8 @@ void* thread_func(void* arg) {
             }
             if (a -> sequence_in_ending == true && (i == a->number_of_begin_of_ending 
                     || (i == a->number_of_begin_of_ending + 1 && a->sequence_in_beginning == true && 
-                    a->number_of_end_of_beginning==a->number_of_begin_of_ending))) {
+                    a->number_of_end_of_beginning==a->number_of_begin_of_ending)
+                    || (i == a->number_of_begin_of_ending + 1 && a->number_of_begin_of_ending == number_of_last_changed))){ 
                 if (a->end_of_segment_before == true && i == segment_begin) {
                     array[segment_begin] = a->new_prev_val;
                     ++changed;
@@ -244,13 +246,25 @@ void* thread_func(void* arg) {
                 }
                 break;
             }
+            if (a ->end_of_segment_before == true && i == segment_begin) {
+                remember_changed_element = array[segment_begin];
+                array[segment_begin] = a->new_prev_val;
+                ++changed;
+                number_of_last_changed = segment_begin;
+                continue;
+            }
 
-            if (i == (segment_end - 1) && a -> begin_of_segment_next == true && a->end_of_segment_before != true) {
+
+
+            if (i == (segment_end - 1) && a -> begin_of_segment_next == true &&
+                    (a->end_of_segment_before != true || (segment_end - segment_begin >= 2))) {
                 array[segment_end - 1] = a->new_next_val;
                 ++changed;
                 break;
             }
+
             if (i >= 1 && i < (n - 1)) {
+                //std::lock_guard<std::mutex> lk(mut);
                 tmp = i;
                 if (i - 1 < segment_begin) {
                     j = i;
@@ -258,13 +272,19 @@ void* thread_func(void* arg) {
                     j = i - 1;
                 }
                 end_counter = -1;
+                int elem_i_1 = 0;
+                if (i + 1 >= segment_end) {
+                    elem_i_1 = a->after_segemnt_end;
+                } else {
+                    elem_i_1 = array[i + 1];
+                }
                 if (number_of_last_changed > 0 && (i - 1 == number_of_last_changed)) {
-                    less_eps = std::fabs(array[i] - 0.5 * (remember_changed_element + array[i + 1])) < EPS;
+                    less_eps = std::fabs(array[i] - 0.5 * (remember_changed_element + elem_i_1)) < EPS;
                 } else {
                     if (i - 1 < segment_begin) {
-                        less_eps = std::fabs(array[i] - 0.5 * (a->before_segment_begin + array[i + 1])) < EPS;
+                        less_eps = std::fabs(array[i] - 0.5 * (a->before_segment_begin + elem_i_1)) < EPS;
                     } else {
-                        less_eps = std::fabs(array[i] - 0.5 * (array[i - 1] + array[i + 1])) < EPS;
+                        less_eps = std::fabs(array[i] - 0.5 * (array[i - 1] + elem_i_1)) < EPS;
                     }
                 }
                 if(less_eps) {
@@ -273,8 +293,13 @@ void* thread_func(void* arg) {
                     } else {
                         begin = array[i - 1];
                     }
-                    end = array[i + 1];
-                    end_counter = i + 1;
+                    if (i + 1 >= segment_end) {
+                        end = a->after_segemnt_end;
+                        end_counter = i;
+                    } else {
+                        end = array[i + 1];
+                        end_counter = i + 1;
+                    }
                     while(i < (segment_end - 2)) { // because of increment on nex line
                         ++i;
                         if(std::fabs(array[i] - 0.5 * (array[i - 1] + array[i + 1])) < EPS) {
@@ -468,6 +493,7 @@ void Arg::print_structure() {
     std::cout << "segment_begin = " << segment_begin << std::endl;
     std::cout << "segment_end = " << segment_end << std::endl;
     std::cout << "k = " << k << std::endl;
+    std::cout << "tid = " << tid << std::endl;
     std::cout << "p = " << p << std::endl;
     std::cout << "n = " << n << std::endl;
     std::cout << "changed = " << changed << std::endl;
@@ -484,6 +510,8 @@ void Arg::print_structure() {
     std::cout << "before_segment_begin = " << before_segment_begin << std::endl;
     std::cout << "end_of_segment_before = " << end_of_segment_before << std::endl;
     std::cout << "new_prev_val = " << new_prev_val << std::endl;
+    std::cout << "begin_of_segment_next = " << begin_of_segment_next << std::endl;
+    std::cout << "new_next_val = " << new_next_val << std::endl;
     std::cout << std::endl;
 }
 
