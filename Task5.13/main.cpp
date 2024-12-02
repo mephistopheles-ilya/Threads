@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
     }
     global_time = get_full_time() - global_time;
 
-#if 0
+#if 1
     printf("RESULT %2d:", p);
     for(int i = 0; i < n; ++i) {
         printf(" %8.2e", array[i]);
@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
     printf(" Changed elements : %2d\n", args[0].changed);
 #endif
 
-#if 1
+#if 0
     printf("%d\n", args[0].changed);
     for(int i = 0; i < n; ++i) {
         printf("%3.2lf ", array[i]);

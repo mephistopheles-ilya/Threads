@@ -6,7 +6,6 @@
 #include <iomanip>
 #include <threads.h>
 #include <mutex>
-#include <algorithm>
 
 #include "func.hpp"
 #include "reduce_sum.hpp"
