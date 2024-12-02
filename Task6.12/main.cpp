@@ -91,20 +91,26 @@ int main(int argc, char* argv[]) {
 
 
     if (args[0].error == 0) {
+#if 0
         printf("RESULT %2d:\n", p);
+#endif
+        printf("%d\n", args[0].changed);
         for(int i = 0; i < n1; ++i) {
-            for (int j = 0; i < n2; ++j) {
-                printf(" %8.2e", matrix[i]);
+            for (int j = 0; j < n2; ++j) {
+                //printf(" %10.2e", matrix[i * n2 + j]);
+                printf(" %6.2lf", matrix[i * n2 + j]);
             }
             printf("\n");
         }
         printf("\n");
 
+#if 0
         printf("Changed elements : %2d\n", args[0].changed);
         printf("All time = %lf\n", global_time);
         for(int i = 0; i < p; ++i) {
             printf("Time for thread number %d = %lf\n", i, args[i].local_time);
         }
+#endif
     }
 
 

@@ -99,7 +99,7 @@ void* thread_func(void* arg) {
     reduce_min(p, &min_elem, 1);
 
     if (segment_begin < n1) {
-        if (segment_begin != 0 && (segment_end - segment_begin != 1)) {
+        if (segment_begin != 0 && (segment_end - segment_begin > 1)) {
             i = segment_begin;
             array1[0] = matrix[i * n2 + 0];
             for(j = 1; j < (n2 - 1); ++j) {
@@ -108,17 +108,20 @@ void* thread_func(void* arg) {
                     array1[j] = matrix[i * n2 + j];
                     matrix[i * n2 + j] = min_elem;
                     ++changed;
+                } else {
+                    array1[j] = matrix[i * n2 + j];
                 }
             }
+            ++i;
         } else {
-            if (k == 0) {
+            if (segment_begin == 0) {
                 i = segment_begin + 1;
             } else {
                 i = segment_begin;
             }
         }
 
-        for(i = segment_begin + 1; i < (segment_end - 1); ++i) {
+        for(; i < (segment_end - 1); ++i) {
             array1[0] = matrix[i * n2 + 0];
             for(j = 1; j < (n2 - 1); ++j) {
                 if (matrix[i * n2 + j] <= array1[j - 1] && matrix[i * n2 + j] <= matrix[i * n2 + (j + 1)]
@@ -126,11 +129,13 @@ void* thread_func(void* arg) {
                     array1[j] = matrix[i * n2 + j];
                     matrix[i * n2 + j] = min_elem;
                     ++changed;
+                } else {
+                    array1[j] = matrix[i * n2 + j];
                 }
             }
         }
 
-        if (segment_end != n1) {
+        if (segment_end != n1 && i < segment_end) {
             array1[0] = matrix[i * n2 + 0];
             for(j = 1; j < (n2 - 1); ++j) {
                 if (matrix[i * n2 + j] <= array1[j - 1] && matrix[i * n2 + j] <= matrix[i * n2 + (j + 1)]
@@ -138,6 +143,8 @@ void* thread_func(void* arg) {
                     array1[j] = matrix[i * n2 + j];
                     matrix[i * n2 + j] = min_elem;
                     ++changed;
+                } else {
+                    array1[j] = matrix[i * n2 + j];
                 }
             }
         }
@@ -146,6 +153,9 @@ void* thread_func(void* arg) {
     a->changed = changed;
 
     reduce_sum(p, &(a->changed), 1);
+
+    delete[] array1;
+    delete[] array2;
 
     a->local_time = get_cpu_time() - local_time;
 
