@@ -5,7 +5,7 @@
 
 using ulli = unsigned long long int;
 
-struct Arg {
+struct  Arg {
     int p = 0;
     int k = 0;
     ulli n = 0;
