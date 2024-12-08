@@ -8,8 +8,9 @@ endif
 			-Woverloaded-virtual -Wnon-virtual-dtor -Wcast-qual -Wno-suggest-attribute=format\
 			-pthread# -fsanitize=leak,undefined,address
 
-CXXFLAGS ?= -g -O0 -fsanitize=leak,undefined,address -ftrapv
-LDFLAGS ?= -fsanitize=leak,undefined,address
+#CXXFLAGS ?= -g -O0 -fsanitize=thread#leak,undefined,address
+#LDFLAGS ?= -fsanitize=thread#leak,undefined,address
+CXXFLAGS ?= -O3 -mfpmath=sse
 
 CSRC = main.cpp func.cpp
 COBJ = main.o func.o

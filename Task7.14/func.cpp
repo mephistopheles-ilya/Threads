@@ -5,13 +5,15 @@
 
 #include "func.hpp"
 
-inline ulli step = 10;
+inline ulli step = 750000;
 
 
 static ulli number_count = 0;
 static ulli prime_count = 0;
 static ulli max_prime = 0;
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static ulli full_max_gap = 0;
+
+//static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 void* thread_func(void* args) {
@@ -32,7 +34,7 @@ void* thread_func(void* args) {
         a->end = end;
 
         find_prime_numbers(begin, end, a);
-        synchronize(p, a, number_count, prime_count, max_prime);
+        synchronize(p, a);
 
     }
 
@@ -43,28 +45,30 @@ void* thread_func(void* args) {
 
 ulli find_prime_numbers(ulli begin, ulli end, Arg* a) {
     ulli count = 0;
-    a->min_prime_number = end;
-    a->max_prime_number = begin;
+    ulli min_prime_number = end;
+    ulli max_prime_number = begin;
     ulli max_gap = 0;
     ulli prev_prime_number = 0;
 
     for(ulli i = begin; i < end; ++i) {
         if(is_prime_1(i) == true) {
             ++count;
-            if (i < a->min_prime_number) {
-                a->min_prime_number = i;
+            if (i < min_prime_number) {
+                min_prime_number = i;
             }
-            if (i > a->max_prime_number) {
-                a->max_prime_number = i;
+            if (i > max_prime_number) {
+                max_prime_number = i;
             }
-            if (i - prev_prime_number >= max_gap) {
-                max_gap = (prev_prime_number != 0) ? i - prev_prime_number : 0;
+            if (i - prev_prime_number > max_gap && prev_prime_number > 0) {
+                max_gap = i - prev_prime_number;
             }
             prev_prime_number = i;
         }
     }
-    a->max_gap = max_gap;
+    a->max_gap = (a->max_gap > max_gap) ? a->max_gap : max_gap;
     a->prime_numbers_on_segment = count;
+    a->max_prime_number = max_prime_number;
+    a->min_prime_number = min_prime_number;
     return count;
 }
 
@@ -100,24 +104,25 @@ bool is_prime_2(ulli number) {
     return true;
 }
 
-void synchronize(int p, Arg* a, ulli& number_count, ulli& prime_count, ulli &max_prime) {
+void synchronize(int p, Arg* a) {
     static pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
     static pthread_cond_t c_in = PTHREAD_COND_INITIALIZER;
     static pthread_cond_t c_out = PTHREAD_COND_INITIALIZER;
     static int t_in = 0;
+    static int t_out = 0;
     //if(p <= 1)  return;
     pthread_mutex_lock(&m);
     ++t_in;
     if(t_in >= p) {
+        t_out = 0;
 
         Arg* args = a - (a->k);
         ulli n = a->n;
         ulli max_gap = (max_prime > 0) ? (args[0].min_prime_number - max_prime) : 0;
         max_prime = args[p - 1].max_prime_number;
-        int i = 0;
-        for(i = 0; i < p; ++i) {
+        for(int i = 0; i < p; ++i) {
             prime_count += args[i].prime_numbers_on_segment; 
-            if (prime_count >= n) {
+            if (prime_count > n) {
                 ulli count = prime_count - args[i].prime_numbers_on_segment;
                 ulli prev_prime_number = 0;
                 i = args[i].begin;
@@ -135,16 +140,24 @@ void synchronize(int p, Arg* a, ulli& number_count, ulli& prime_count, ulli &max
                     args[j].stop = true;
                 }
                 break;
+            } else if (prime_count == n) {
+                for(int j = 0; j < p; ++j) {
+                    args[j].stop = true;
+                }
+                break;
             }
             if (args[i].max_gap > max_gap) {
                 max_gap = args[i].max_gap;
             }
-            if (i < (p - 1) && (args[i + 1].min_prime_number - args[i].max_prime_number) > max_gap) {
-                max_gap = args[i + 1].min_prime_number - args[i].max_prime_number;
+            if (i >= 1 && (args[i].min_prime_number - args[i - 1].max_prime_number) > max_gap) {
+                max_gap = args[i].min_prime_number - args[i - 1].max_prime_number;
             }
         }
-        for(i = 0; i < p; ++i) {
-            args[i].max_gap = max_gap;
+        if (max_gap > full_max_gap) {
+            full_max_gap = max_gap;
+        }
+        for(int i = 0; i < p; ++i) {
+            args[i].max_gap = full_max_gap;
         }
         number_count += p * step;
 
@@ -152,6 +165,15 @@ void synchronize(int p, Arg* a, ulli& number_count, ulli& prime_count, ulli &max
     } else {
         while(t_in < p) {
             pthread_cond_wait(&c_in, &m);
+        }
+    }
+    ++t_out;
+    if(t_out >= p) {
+        t_in = 0;
+        pthread_cond_broadcast(&c_out);
+    } else {
+        while (t_out < p) {
+            pthread_cond_wait(&c_out, &m);
         }
     }
     pthread_mutex_unlock(&m);

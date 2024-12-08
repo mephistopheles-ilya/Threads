@@ -49,6 +49,9 @@ int main(int argc, char* argv[]) {
     }
     args[0].tid = pthread_self();
     thread_func(args + 0);
+    for(int i = 1; i < p; ++i) {
+        pthread_join(args[i].tid, nullptr);
+    }
 
     full_time = get_full_time() - full_time;
 

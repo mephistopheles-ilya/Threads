@@ -5,7 +5,7 @@
 
 using ulli = unsigned long long int;
 
-struct alignas(256) Arg {
+struct Arg {
     int p = 0;
     int k = 0;
     ulli n = 0;
@@ -29,4 +29,4 @@ double get_full_time();
 ulli find_prime_numbers(ulli begin, ulli end, Arg* a);
 bool is_prime_1(ulli number);
 bool is_prime_2(ulli number);
-void synchronize(int p, Arg* a, ulli& number_count, ulli& prime_count, ulli& max_prime);
+void synchronize(int p, Arg* a);
