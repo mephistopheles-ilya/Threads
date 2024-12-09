@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
     }
     t = (clock() - t) / CLOCKS_PER_SEC;
     printf("Result = %llu\n", max_gap);
-    //printf("Time = %lf\n", t);
+    printf("Time = %lf\n", t);
 
     return 0;
 }

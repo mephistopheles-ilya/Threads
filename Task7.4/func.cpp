@@ -5,52 +5,9 @@
 
 #include "func.hpp"
 
-inline ulli step = 50000;
-
-static ulli number_count = 0;
-static ulli prime_count = 0;
-static ulli max_gap = 0;
-
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+inline ulli step = 750000;
 
 
-void* thread_func(void* args) {
-    double local_time = get_cpu_time();
-    
-    Arg* a = (Arg*)args;
-    ulli n = a->n;
-    int p = a->p;
-    int k = a->k;
-
-    ulli begin = 0, end = 0;
-    ulli prime_numbers_on_segment = 0;
-    ulli local_prime_count = 0;
-
-    while(a->stop == false) {
-        pthread_mutex_lock(&mutex);
-        prime_count += prime_numbers_on_segment;
-        local_prime_count = prime_count;
-        begin = number_count;
-        number_count += step;
-        end = number_count;
-        if (local_prime_count <= n) max_gap = (max_gap > a->max_gap) ? max_gap : a->max_gap;
-        //a->begin = begin;
-        //a->end = end;
-        pthread_mutex_unlock(&mutex);
-        if (local_prime_count >= n) break;
-        prime_numbers_on_segment = find_prime_numbers(begin, end, a);
-        //synchronize(p, a);
-
-    }
-
-    a->max_gap = max_gap;
-    local_time = get_cpu_time() - local_time;
-    a->local_time = local_time;
-    return nullptr;
-}
-
-
-#if 0
 static ulli number_count = 0;
 static ulli prime_count = 0;
 static ulli max_prime = 0;
@@ -85,7 +42,6 @@ void* thread_func(void* args) {
     a->local_time = local_time;
     return nullptr;
 }
-#endif
 
 ulli find_prime_numbers(ulli begin, ulli end, Arg* a) {
     ulli count = 0;
@@ -148,7 +104,6 @@ bool is_prime_2(ulli number) {
     return true;
 }
 
-#if 0
 void synchronize(int p, Arg* a) {
     static pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
     static pthread_cond_t c_in = PTHREAD_COND_INITIALIZER;
@@ -163,8 +118,7 @@ void synchronize(int p, Arg* a) {
 
         Arg* args = a - (a->k);
         ulli n = a->n;
-        //ulli max_gap = (max_prime > 0) ? (args[0].min_prime_number - max_prime) : 0;
-        ulli max_gap = 0;
+        ulli max_gap = (max_prime > 0) ? (args[0].min_prime_number - max_prime) : 0;
         max_prime = args[p - 1].max_prime_number;
         for(int i = 0; i < p; ++i) {
             prime_count += args[i].prime_numbers_on_segment; 
@@ -194,12 +148,10 @@ void synchronize(int p, Arg* a) {
             }
             if (args[i].max_gap > max_gap) {
                 max_gap = args[i].max_gap;
-                //printf("max gap in middle = %llu\n", max_gap);
             }
-            //if (i >= 1 && (args[i].min_prime_number - args[i - 1].max_prime_number) > max_gap) {
-            //    max_gap = args[i].min_prime_number - args[i - 1].max_prime_number;
-            //    printf("ERROR max gap on slice = %llu\n", max_gap);
-            //}
+            if (i >= 1 && (args[i].min_prime_number - args[i - 1].max_prime_number) > max_gap) {
+                max_gap = args[i].min_prime_number - args[i - 1].max_prime_number;
+            }
         }
         if (max_gap > full_max_gap) {
             full_max_gap = max_gap;
@@ -226,7 +178,6 @@ void synchronize(int p, Arg* a) {
     }
     pthread_mutex_unlock(&m);
 }
-#endif
 
 
 double get_cpu_time() {
