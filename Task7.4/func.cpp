@@ -1,11 +1,12 @@
 #include <sys/time.h>
 #include <sys/sysinfo.h>
 #include <sys/resource.h>
-#include <stdio.h>
 
 #include "func.hpp"
 
-inline ulli step = 750000;
+//inline ulli step = 750000;
+//inline ulli step = 100000;
+inline ulli step = 80000;
 
 
 static ulli number_count = 0;
@@ -13,19 +14,16 @@ static ulli prime_count = 0;
 static ulli max_prime = 0;
 static ulli full_max_gap = 0;
 
-//static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 void* thread_func(void* args) {
     double local_time = get_cpu_time();
     
     Arg* a = (Arg*)args;
-    ulli n = a->n;
     int p = a->p;
     int k = a->k;
 
     ulli begin = 0, end = 0;
-    ulli prime_numbers_on_segment = 0;
 
     while(a->stop == false) {
         begin = number_count + k * step;
@@ -33,7 +31,10 @@ void* thread_func(void* args) {
         a->begin = begin;
         a->end = end;
 
+        //double time = get_cpu_time();
         find_prime_numbers(begin, end, a);
+        //time = get_cpu_time() - time;
+        //std::cout << time << std::endl;
         synchronize(p, a);
 
     }
@@ -74,7 +75,7 @@ ulli find_prime_numbers(ulli begin, ulli end, Arg* a) {
 
 
 // prime numbers  6*k+1 or 6*k-1
-bool is_prime_1(ulli number) {
+bool is_prime_2(ulli number) {
     if ((number == 2) || (number == 3)) {
         return true;
     }
@@ -89,7 +90,7 @@ bool is_prime_1(ulli number) {
     return true;
 }
 
-bool is_prime_2(ulli number) {
+bool is_prime_1(ulli number) {
     if (number == 2) {
         return true;
     }
