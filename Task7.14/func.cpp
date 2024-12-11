@@ -2,10 +2,11 @@
 #include <sys/sysinfo.h>
 #include <sys/resource.h>
 #include <stdio.h>
+#include <algorithm>
 
 #include "func.hpp"
 
-inline ulli step = 50000;
+const ulli step = 50000;
 
 static ulli number_count = 0;
 static ulli prime_count = 0;
@@ -19,105 +20,135 @@ void* thread_func(void* args) {
     
     Arg* a = (Arg*)args;
     ulli n = a->n;
-    int p = a->p;
-    int k = a->k;
 
     ulli begin = 0, end = 0;
     ulli prime_numbers_on_segment = 0;
     ulli local_prime_count = 0;
-
-    while(a->stop == false) {
-        pthread_mutex_lock(&mutex);
-        prime_count += prime_numbers_on_segment;
-        local_prime_count = prime_count;
-        begin = number_count;
-        number_count += step;
-        end = number_count;
-        if (local_prime_count <= n) max_gap = (max_gap > a->max_gap) ? max_gap : a->max_gap;
-        //a->begin = begin;
-        //a->end = end;
-        pthread_mutex_unlock(&mutex);
-        if (local_prime_count >= n) break;
-        prime_numbers_on_segment = find_prime_numbers(begin, end, a);
-        //synchronize(p, a);
-
-    }
-
-    a->max_gap = max_gap;
-    local_time = get_cpu_time() - local_time;
-    a->local_time = local_time;
-    return nullptr;
-}
-
-
-#if 0
-static ulli number_count = 0;
-static ulli prime_count = 0;
-static ulli max_prime = 0;
-static ulli full_max_gap = 0;
-
-//static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-
-
-void* thread_func(void* args) {
-    double local_time = get_cpu_time();
-    
-    Arg* a = (Arg*)args;
-    ulli n = a->n;
-    int p = a->p;
-    int k = a->k;
-
-    ulli begin = 0, end = 0;
-    ulli prime_numbers_on_segment = 0;
-
-    while(a->stop == false) {
-        begin = number_count + k * step;
-        end = begin + step;
-        a->begin = begin;
-        a->end = end;
-
-        find_prime_numbers(begin, end, a);
-        synchronize(p, a);
-
-    }
-
-    local_time = get_cpu_time() - local_time;
-    a->local_time = local_time;
-    return nullptr;
-}
-#endif
-
-ulli find_prime_numbers(ulli begin, ulli end, Arg* a) {
-    ulli count = 0;
-    ulli min_prime_number = end;
-    ulli max_prime_number = begin;
-    ulli max_gap = 0;
+    ulli locla_max_gap = 0;
+    ulli max_gap_on_segment = 0;
+    ulli copy_prime_count = 0;
     ulli prev_prime_number = 0;
 
-    for(ulli i = begin; i < end; ++i) {
-        if(is_prime_1(i) == true) {
-            ++count;
-            if (i < min_prime_number) {
-                min_prime_number = i;
+    while(true) {
+        pthread_mutex_lock(&mutex);
+
+        prime_count += prime_numbers_on_segment;
+        if(prime_count <= n) {
+            local_prime_count = prime_count;
+            begin = number_count;
+            number_count += step;
+            end = number_count;
+            max_gap = (max_gap > max_gap_on_segment) ? max_gap : max_gap_on_segment;
+            locla_max_gap = max_gap;
+        }
+        copy_prime_count = prime_count;
+        
+        pthread_mutex_unlock(&mutex);
+
+        if (copy_prime_count >= n) break;
+        prime_numbers_on_segment = 0;
+        max_gap_on_segment = 0;
+        prev_prime_number = 0;
+        for(ulli i = begin; i < end; ++i) {
+            if(is_prime_1(i) == true) {
+                ++prime_numbers_on_segment;
+                if (i - prev_prime_number > max_gap_on_segment && prev_prime_number > 0) {
+                    max_gap_on_segment = i - prev_prime_number;
+                }
+                prev_prime_number = i;
             }
-            if (i > max_prime_number) {
-                max_prime_number = i;
-            }
-            if (i - prev_prime_number > max_gap && prev_prime_number > 0) {
-                max_gap = i - prev_prime_number;
-            }
-            prev_prime_number = i;
         }
     }
-    a->max_gap = (a->max_gap > max_gap) ? a->max_gap : max_gap;
-    a->prime_numbers_on_segment = count;
-    a->max_prime_number = max_prime_number;
-    a->min_prime_number = min_prime_number;
-    return count;
+
+    a->begin = begin;
+    a->end = end;
+    a->prime_numbers_on_segment = prime_numbers_on_segment;
+    a->local_prime_count = local_prime_count;
+    a->local_max_gap = locla_max_gap;
+    a->max_gap_on_segment = max_gap_on_segment;
+
+#if 0
+    pthread_barrier_wait(a->barrier);
+
+    pthread_mutex_lock(&mutex);
+    if (a->k == 0) {
+        std::copy(a, a + (a->p), a->copy);
+    }
+    //printf("%llu %llu\n", a->max_gap_on_segment, a->local_max_gap);
+    pthread_mutex_unlock(&mutex);
+
+    if (a->k == 0) {
+        Arg* copy = a->copy;
+        std::sort(copy, copy + (a->p), [](const Arg& a, const Arg& b) { return a.begin < b.begin;});
+        //ulli must_begin_with = copy[0].begin;
+        max_gap = copy[0].local_max_gap;
+        prime_count = copy[0].local_prime_count;
+
+        prev_prime_number = 0;
+        for(ulli j = copy[0].begin; j < copy[a->p-1].end && prime_count < n; ++j) {
+            if(is_prime_1(j) == true) {
+                ++prime_count;
+                if (j - prev_prime_number > max_gap && prev_prime_number > 0) {
+                    max_gap = j - prev_prime_number;
+                }
+                prev_prime_number = j;
+            }
+        }
+        for(int i = 0; i < a->p; ++i) {
+            if(copy[i].begin != must_begin_with) {
+                prev_prime_number = 0;
+                for(ulli j = copy[i].begin; j < copy[i].end && prime_count < n; ++j) {
+                    if(is_prime_1(j) == true) {
+                        ++prime_count;
+                        if (j - prev_prime_number > max_gap && prev_prime_number > 0) {
+                            max_gap = j - prev_prime_number;
+                        }
+                        prev_prime_number = j;
+                    }
+                }
+                if(prime_count >= n) {
+                    break;
+                }
+                must_begin_with += step;
+                continue;
+            }
+            prime_count += copy[i].local_prime_count;
+            if (prime_count > n) {
+                prev_prime_number = 0;
+                prime_count -= copy[i].local_prime_count;
+                ulli j = copy[i].begin;
+                while(prime_count < n) {
+                    if(is_prime_1(j) == true) {
+                        ++prime_count;
+                        if (j - prev_prime_number > max_gap && prev_prime_number > 0) {
+                            max_gap = j - prev_prime_number;
+                        }
+                        prev_prime_number = j;
+                        ++j;
+                    }
+                }
+                break;
+            }
+            max_gap = (max_gap > copy[i].max_gap_on_segment) ? max_gap : copy[i].max_gap_on_segment;
+            max_gap = (max_gap > copy[i].local_max_gap) ? max_gap : copy[i].local_max_gap;
+            must_begin_with += step;
+        }
+    }
+
+    pthread_barrier_wait(a->barrier);
+
+    a->answer = max_gap;
+    local_time = get_cpu_time() - local_time;
+    a->local_time = local_time;
+
+#endif
+    a->local_time = local_time;
+    return nullptr;
 }
 
 
-// prime numbers  6*k+1 or 6*k-1
+
+
 bool is_prime_1(ulli number) {
     if ((number == 2) || (number == 3)) {
         return true;
@@ -147,87 +178,6 @@ bool is_prime_2(ulli number) {
     }
     return true;
 }
-
-#if 0
-void synchronize(int p, Arg* a) {
-    static pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
-    static pthread_cond_t c_in = PTHREAD_COND_INITIALIZER;
-    static pthread_cond_t c_out = PTHREAD_COND_INITIALIZER;
-    static int t_in = 0;
-    static int t_out = 0;
-    //if(p <= 1)  return;
-    pthread_mutex_lock(&m);
-    ++t_in;
-    if(t_in >= p) {
-        t_out = 0;
-
-        Arg* args = a - (a->k);
-        ulli n = a->n;
-        //ulli max_gap = (max_prime > 0) ? (args[0].min_prime_number - max_prime) : 0;
-        ulli max_gap = 0;
-        max_prime = args[p - 1].max_prime_number;
-        for(int i = 0; i < p; ++i) {
-            prime_count += args[i].prime_numbers_on_segment; 
-            if (prime_count > n) {
-                ulli count = prime_count - args[i].prime_numbers_on_segment;
-                ulli prev_prime_number = 0;
-                i = args[i].begin;
-                while(count < n) {
-                    if (is_prime_1(i) == true) {
-                        ++count;
-                        if (prev_prime_number > 0 && i - prev_prime_number > max_gap) {
-                            max_gap = i - prev_prime_number;
-                        }
-                        prev_prime_number = i;
-                    }
-                    ++i;
-                }
-                for(int j = 0; j < p; ++j) {
-                    args[j].stop = true;
-                }
-                break;
-            } else if (prime_count == n) {
-                for(int j = 0; j < p; ++j) {
-                    args[j].stop = true;
-                }
-                break;
-            }
-            if (args[i].max_gap > max_gap) {
-                max_gap = args[i].max_gap;
-                //printf("max gap in middle = %llu\n", max_gap);
-            }
-            //if (i >= 1 && (args[i].min_prime_number - args[i - 1].max_prime_number) > max_gap) {
-            //    max_gap = args[i].min_prime_number - args[i - 1].max_prime_number;
-            //    printf("ERROR max gap on slice = %llu\n", max_gap);
-            //}
-        }
-        if (max_gap > full_max_gap) {
-            full_max_gap = max_gap;
-        }
-        for(int i = 0; i < p; ++i) {
-            args[i].max_gap = full_max_gap;
-        }
-        number_count += p * step;
-
-        pthread_cond_broadcast(&c_in);
-    } else {
-        while(t_in < p) {
-            pthread_cond_wait(&c_in, &m);
-        }
-    }
-    ++t_out;
-    if(t_out >= p) {
-        t_in = 0;
-        pthread_cond_broadcast(&c_out);
-    } else {
-        while (t_out < p) {
-            pthread_cond_wait(&c_out, &m);
-        }
-    }
-    pthread_mutex_unlock(&m);
-}
-#endif
-
 
 double get_cpu_time() {
     struct rusage buf;

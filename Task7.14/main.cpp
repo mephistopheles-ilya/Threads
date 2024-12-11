@@ -22,8 +22,12 @@ int main(int argc, char* argv[]) {
     }
 
     Arg* args = new (std::nothrow) Arg[p];
+    Arg* copy = new (std::nothrow) Arg[p];
+    pthread_barrier_t barrier;
+    pthread_barrier_init(&barrier, nullptr, p);
     if (args == nullptr) {
         printf("Not enough memmory\n");
+        pthread_barrier_destroy(&barrier);
         return 2;
     }
 
@@ -31,6 +35,8 @@ int main(int argc, char* argv[]) {
         args[i].k = i;
         args[i].p = p;
         args[i].n = n;
+        args[i].barrier = &barrier;
+        args[i].copy = copy;
     }
 
     double full_time = 0;
@@ -44,6 +50,7 @@ int main(int argc, char* argv[]) {
                 pthread_join(args[l].tid, nullptr);
             }
             delete[] args;
+            pthread_barrier_destroy(&barrier);
             return 2;
         }
     }
@@ -55,11 +62,13 @@ int main(int argc, char* argv[]) {
 
     full_time = get_full_time() - full_time;
 
-    printf("Result = %llu\n", args[0].max_gap);
+    printf("Result = %llu\n", args[0].answer);
 
     printf("Full time : %lf\n", full_time);
 
     delete[] args;
+    delete[] copy;
+    pthread_barrier_destroy(&barrier);
     return 0;
 }
 
