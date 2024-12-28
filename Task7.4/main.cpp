@@ -55,6 +55,10 @@ int main(int argc, char* argv[]) {
 
     full_time = get_full_time() - full_time;
 
+    for(int i = 0; i < p; ++i) {
+        printf("Time for thread %d %lf\n", i, args[i].local_time);
+    }
+
     printf("Result = %llu\n", args[0].max_gap);
 
     printf("Full time : %lf\n", full_time);

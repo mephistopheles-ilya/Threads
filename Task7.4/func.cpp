@@ -31,10 +31,7 @@ void* thread_func(void* args) {
         a->begin = begin;
         a->end = end;
 
-        //double time = get_cpu_time();
         find_prime_numbers(begin, end, a);
-        //time = get_cpu_time() - time;
-        //std::cout << time << std::endl;
         synchronize(p, a);
 
     }
@@ -74,7 +71,6 @@ ulli find_prime_numbers(ulli begin, ulli end, Arg* a) {
 }
 
 
-// prime numbers  6*k+1 or 6*k-1
 bool is_prime_2(ulli number) {
     if ((number == 2) || (number == 3)) {
         return true;
@@ -111,7 +107,6 @@ void synchronize(int p, Arg* a) {
     static pthread_cond_t c_out = PTHREAD_COND_INITIALIZER;
     static int t_in = 0;
     static int t_out = 0;
-    //if(p <= 1)  return;
     pthread_mutex_lock(&m);
     ++t_in;
     if(t_in >= p) {

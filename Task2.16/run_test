@@ -11,8 +11,8 @@ do
     diff res_p res
     if [ $? -ne 0 ]; then
         echo "Test Faild"
-        break
         flag=1
+        break
     fi
 done
 
